@@ -1,5 +1,34 @@
 version: '3'
 services:
+  gateway:
+    image: panchem/node-runner
+    command: bash -c "cd gateway && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    environment:
+      NATS: "nats://nats:4222"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "$PWD:/app/"
+  placement:
+    image: panchem/node-runner
+    command: bash -c "cd placement && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    environment:
+      NATS: "nats://nats:4222"
+      PGUSER: postgres
+      PGHOST: postgres
+      PGPASSWORD: password
+    volumes:
+      - "$PWD:/app/"
+  query:
+    image: panchem/node-runner
+    command: bash -c "cd query && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    environment:
+      NATS: "nats://nats:4222"
+      PGUSER: postgres
+      PGHOST: postgres
+      PGPASSWORD: password
+    volumes:
+      - "$PWD:/app/"
   nats:
     image: nats:1.2.0-linux
     ports:

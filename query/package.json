@@ -1,0 +1,19 @@
+{
+  "name": "query",
+  "version": "0.1.0",
+  "description": "The module for retrieving data from db/redis",
+  "main": "index.js",
+  "author": "Caleb Hiebert",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node index.js | pino"
+  },
+  "dependencies": {
+    "@px/db": "../db",
+    "@px/nats": "../nats",
+    "dotenv": "^6.0.0",
+    "msgpack": "^1.0.2",
+    "pino": "^4.17.3"
+  }
+}
