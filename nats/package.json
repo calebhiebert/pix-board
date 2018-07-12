@@ -1,14 +1,13 @@
 {
-  "name": "@px/db",
+  "name": "@px/nats",
   "version": "0.1.0",
-  "description": "Database module for pixboard",
+  "description": "Nats module",
   "main": "index.js",
   "author": "Caleb Hiebert",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "dotenv": "^6.0.0",
-    "pg-promise": "^8.4.5",
+    "nats": "^1.0.0",
     "pino": "^4.17.3"
   }
 }

@@ -1,5 +1,6 @@
 const pg = require('pg-promise');
 const path = require('path');
+const logger = require('pino')({ name: 'db', level: process.env.LOG_LEVEL || 'info' });
 
 function sql(file) {
   const fullPath = path.join(__dirname, 'sql', file);
@@ -22,10 +23,10 @@ const db = pg()({
 
 db.any(q.tables)
   .then((result) => {
-    console.log(result);
+    logger.info('Successfully created database');
   })
   .catch((err) => {
-    console.log(err);
+    logger.error('Database creation error', err);
   });
 
 const insertPix = (x, y, pix, userId) => {

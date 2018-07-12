@@ -2,6 +2,19 @@
 # yarn lockfile v1
 
 
+"@px/db@../db":
+  version "0.1.0"
+  dependencies:
+    dotenv "^6.0.0"
+    pg-promise "^8.4.5"
+    pino "^4.17.3"
+
+"@px/nats@../nats":
+  version "0.1.0"
+  dependencies:
+    nats "^1.0.0"
+    pino "^4.17.3"
+
 ansi-styles@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-3.2.1.tgz#41fbb20243e50b12be0f04b8dedbf07520ce841d"
@@ -75,6 +88,26 @@ isarray@~1.0.0:
 manakin@0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/manakin/-/manakin-0.5.1.tgz#c4a7116f6b00df3d5f1a37ad3ca515d22065a658"
+
+msgpack@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/msgpack/-/msgpack-1.0.2.tgz#923e2c5cffa65c8418e9b228d1124793969c429c"
+  dependencies:
+    nan "^2.0.9"
+
+nan@^2.0.9:
+  version "2.10.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.10.0.tgz#96d0cd610ebd58d4b4de9cc0c6828cda99c7548f"
+
+nats@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/nats/-/nats-1.0.0.tgz#6b1681c46ec08ea0b92dfed1abe413692b44c35f"
+  dependencies:
+    nuid "^1.0.0"
+
+nuid@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/nuid/-/nuid-1.0.0.tgz#04ecc21be41cc321940a9089984382f3bdc61638"
 
 once@^1.3.1, once@^1.4.0:
   version "1.4.0"

@@ -11,6 +11,7 @@
     "lint": "node_modules/.bin/eslint src  --fix"
   },
   "dependencies": {
+    "@px/nats": "../nats",
     "ajv": "^6.5.2",
     "auth0": "^2.10.0",
     "body-parser": "^1.18.3",
@@ -21,7 +22,7 @@
     "jsonwebtoken": "^8.3.0",
     "jwks-rsa": "^1.3.0",
     "msgpack": "^1.0.2",
-    "nats": "^1.0.0",
+    "nats": "../nats",
     "pino": "^4.17.3"
   },
   "devDependencies": {

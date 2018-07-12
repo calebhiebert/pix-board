@@ -1,16 +1,15 @@
 const pino = require('pino');
 const app = require('express')();
 const bodyParser = require('body-parser');
-const nc = require('./nats');
 const msgpack = require('msgpack');
 const v = require('./validate');
-const auth = require('./auth0-middleware');
-const Redis = require('ioredis');
+const nc = require('@px/nats');
+// const auth = require('./auth0-middleware');
+// const Redis = require('ioredis');
 
 const port = process.env.PORT || 3000;
 const logger = pino({ name: 'index' });
 const errLogger = pino({ name: 'unhandled-err' });
-const redis = new Redis();
 
 app.use(bodyParser.json());
 // app.use(
@@ -20,7 +19,7 @@ app.use(bodyParser.json());
 //       clientId: process.env.AUTH0_CLIENT_ID,
 //       clientSecret: process.env.AUTH0_CLIENT_SECRET,
 //     },
-//     redis,
+//     new Redis(),
 //   ),
 // );
 
@@ -33,13 +32,6 @@ app.use(bodyParser.json());
 //   }
 // });
 
-nc.subscribe('placement', (request, replyTo) => {
-  const data = msgpack.unpack(request);
-  logger.info('Placement', data);
-
-  nc.publish(replyTo, msgpack.pack({ placement: 'reply' }));
-});
-
 app.post('/place', async (req, res) => {
   try {
     // Validate the place body to make sure it has the proper properties
@@ -50,11 +42,14 @@ app.post('/place', async (req, res) => {
 
   // Validate user can place pix here (check time since last placement and whatnot)
 
-  const result = await nc.requestOneAsync('placement', msgpack.pack(req.body), {}, 1000);
-
-  logger.info('got result', result);
-
-  res.status(200).json({ ok: 'yes' });
+  try {
+    const result = await nc.requestOneAsync('placement', msgpack.pack({ ...req.body, userId: 'dummy' }), {}, 1000);
+    const pix = msgpack.unpack(result);
+    res.status(200).json(pix);
+  } catch (err) {
+    logger.error('Placement error', err);
+    res.status(500).json({ error: err });
+  }
 });
 
 app.get('/board', async (req, res) => {
