@@ -1,0 +1,9 @@
+{
+  "name": "placement",
+  "version": "0.1.0",
+  "description": "Module for writing incoming data to the database/redis",
+  "main": "index.js",
+  "author": "Caleb Hiebert",
+  "license": "MIT",
+  "private": true
+}

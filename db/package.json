@@ -1,0 +1,16 @@
+{
+  "name": "db",
+  "version": "0.1.0",
+  "description": "Database module for pixboard",
+  "main": "index.js",
+  "author": "Caleb Hiebert",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node -r dotenv/config index.js"
+  },
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "pg-promise": "^8.4.5"
+  }
+}

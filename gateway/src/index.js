@@ -4,12 +4,34 @@ const bodyParser = require('body-parser');
 const nc = require('./nats');
 const msgpack = require('msgpack');
 const v = require('./validate');
+const auth = require('./auth0-middleware');
+const Redis = require('ioredis');
 
 const port = process.env.PORT || 3000;
 const logger = pino({ name: 'index' });
 const errLogger = pino({ name: 'unhandled-err' });
+const redis = new Redis();
 
 app.use(bodyParser.json());
+// app.use(
+//   auth(
+//     {
+//       domain: process.env.AUTH0_DOMAIN,
+//       clientId: process.env.AUTH0_CLIENT_ID,
+//       clientSecret: process.env.AUTH0_CLIENT_SECRET,
+//     },
+//     redis,
+//   ),
+// );
+
+// app.use((req, res, next) => {
+//   if (req.user) {
+//     next();
+//   } else {
+//     res.header('WWW-Authenticate', 'Bearer');
+//     return res.status(401).json({ error: 'Authentication required' });
+//   }
+// });
 
 nc.subscribe('placement', (request, replyTo) => {
   const data = msgpack.unpack(request);
@@ -33,6 +55,12 @@ app.post('/place', async (req, res) => {
   logger.info('got result', result);
 
   res.status(200).json({ ok: 'yes' });
+});
+
+app.get('/board', async (req, res) => {
+  const board = new Uint8Array(500 * 500);
+  res.status(200).write(Buffer.from(board), 'buffer');
+  res.end('', 'buffer');
 });
 
 app.get('/info', async (req, res) => {
@@ -61,6 +89,7 @@ app.get('/info', async (req, res) => {
       { hex: '#7D3CB5', name: 'purple' },
       { hex: '#BD7AF6', name: 'light-purple' },
     ],
+    user: req.user,
   });
 });
 
