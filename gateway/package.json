@@ -1,0 +1,25 @@
+{
+  "name": "pix-board",
+  "version": "0.1.0",
+  "description": "An api gateway for the pixboard application",
+  "main": "index.js",
+  "author": "Caleb Hiebert",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js | pino",
+    "lint": "node_modules/.bin/eslint src  --fix"
+  },
+  "dependencies": {
+    "ajv": "^6.5.2",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "msgpack": "^1.0.2",
+    "nats": "^1.0.0",
+    "pino": "^4.17.3"
+  },
+  "devDependencies": {
+    "eslint": "^5.1.0"
+  }
+}
