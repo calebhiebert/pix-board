@@ -14,6 +14,7 @@ nc.subscribe('placement', async (data, replyTo) => {
     const { id } = await db.insertPix(pixData.x, pixData.y, pixData.pix, pixData.userId);
 
     nc.publish(replyTo, msgpack.pack({ id, ...pixData }));
+    nc.publish('new-pixel', msgpack.pack({ id, ...pixData }));
   } catch (err) {
     logger.error('Pix insertion error', err);
   }

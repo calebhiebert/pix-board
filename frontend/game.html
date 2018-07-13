@@ -10,14 +10,12 @@
   <button id="get-board-button">Get Board</button>
   <button id="get-game-info">Get Game Info</button>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
   <script src="config.js"></script>
   <script src="api.js"></script>
   <canvas id="canvas" style="border:1px solid #000000"></canvas>
 
   <script>
-
-
-
     window.onload = function () {
       var canvas = document.getElementById('canvas');
       var context = canvas.getContext('2d');
@@ -62,6 +60,18 @@
 
     }
 
+    const ws = new WebSocket(`ws://localhost:3001?token=${authToken}`);
+    ws.binaryType = 'arraybuffer'
+
+    ws.addEventListener('open', () => {
+      console.log('Websocket Connection Opened');
+    })
+
+    ws.addEventListener('message', ({ data }) => {
+      const unpacked = msgpack.decode(new Uint8Array(data));
+      console.log('Websocket Message', unpacked);
+    });
+
     document.getElementById('place-pixel-button').addEventListener('click', () => {
       place(1, 1, 1)
         .then((pixel) => {
@@ -77,6 +87,7 @@
       getBoard()
         .then((board) => {
           draw(board.data)
+          console.log(board);
         })
     })
 

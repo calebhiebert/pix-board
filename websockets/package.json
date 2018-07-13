@@ -1,0 +1,17 @@
+{
+  "name": "websockets",
+  "version": "0.1.0",
+  "description": "Websocket module for websocket things",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node index.js | pino"
+  },
+  "dependencies": {
+    "@px/nats": "../nats/",
+    "msgpack": "^1.0.2",
+    "pino": "^4.17.3",
+    "ws": "^5.2.2"
+  }
+}

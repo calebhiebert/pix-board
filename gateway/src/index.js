@@ -69,10 +69,10 @@ app.post('/place', async (req, res) => {
 
 app.get('/board', async (req, res) => {
   try {
-    nc.publish('board-from-db');
     const result = await nc.requestOneAsync('board-cache', null, {}, 2500);
 
     res.header('Content-Length', result.length);
+    res.header('Content-Type', 'application/octet-stream');
     res.status(200).write(result, 'buffer');
     res.end(null, 'buffer');
   } catch (err) {

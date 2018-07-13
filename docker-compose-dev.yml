@@ -2,7 +2,8 @@ version: '3'
 services:
   gateway:
     image: panchem/node-runner
-    command: bash -c "cd gateway && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    container_name: gateway
+    command: bash -c "cd gateway && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start"
     environment:
       NATS: "nats://nats:4222"
       REDIS: "redis://redis:6379"
@@ -10,9 +11,20 @@ services:
       - "3000:3000"
     volumes:
       - "$PWD:/app/"
-  placement:
+  websockets:
     image: panchem/node-runner
-    command: bash -c "cd placement && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    container_name: ws
+    command: bash -c "cd websockets && yarn --silent && yarn upgrade --silent @px/nats && nodemon -q --exec yarn start"
+    environment:
+      NATS: "nats://nats:4222"
+    ports:
+      - "3001:8080"
+    volumes:
+      - "$PWD:/app/"
+  placement:
+    container_name: placement
+    image: panchem/node-runner
+    command: bash -c "cd placement && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start"
     environment:
       NATS: "nats://nats:4222"
       PGUSER: postgres
@@ -21,8 +33,9 @@ services:
     volumes:
       - "$PWD:/app/"
   query:
+    container_name: query
     image: panchem/node-runner
-    command: bash -c "cd query && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
+    command: bash -c "cd query && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start"
     environment:
       NATS: "nats://nats:4222"
       PGUSER: postgres
@@ -31,22 +44,26 @@ services:
     volumes:
       - "$PWD:/app/"
   frontend:
+    container_name: frontend
     image: nginx:1.15-alpine
     volumes:
       - "$PWD/frontend:/usr/share/nginx/html:ro"
     ports:
       - "8080:80"
   nats:
+    container_name: nats
     image: nats:1.2.0-linux
     ports:
       - "4222:4222"
       - "8222:8222"
       - "6222:6222"
   redis:
+    container_name: redis
     image: redis:alpine
     ports:
       - "6379:6379"
   postgres:
+    container_name: postgres
     image: postgres:10-alpine
     ports:
       - 5432:5432
@@ -54,6 +71,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
   adminer:
+    container_name: adminer
     image: adminer
     ports:
       - "9000:8080"
