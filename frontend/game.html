@@ -8,11 +8,58 @@
   <h2>This is the game yall</h2>
   <button id="place-pixel-button">Place Pixel</button>
   <button id="get-board-button">Get Board</button>
+  <button id="get-game-info">Get Game Info</button>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
   <script src="config.js"></script>
   <script src="api.js"></script>
+  <canvas id="canvas" style="border:1px solid #000000"></canvas>
+
   <script>
+    window.onload = function () {
+      var canvas = document.getElementById('canvas');
+      var context = canvas.getContext('2d');
+      canvas.addEventListener('mousedown', onDown, false);
+      var item = localStorage.getItem('game-info');
+
+
+
+      var canvasBoard = (JSON.parse(item));
+
+      console.log(canvasBoard);
+
+
+
+
+
+      var canvas = document.getElementsByTagName('canvas')[0];
+      canvas.width = canvasBoard.board.xWidth;
+      canvas.height = canvasBoard.board.yWidth;
+
+    }
+
+    function onDown(event) {
+      x = event.pageX;
+      y = event.pageY;
+      console.log(x);
+      console.log(y);
+
+      place(x, y, 6)
+        .then((pixel) => {
+          console.log(pixel);
+        }).catch((err) => {
+          if (err.response.status === 400) {
+            console.log("Too Fast!!!");
+          }
+          if (err.response.status === 560) {
+            console.log("Server is down:");
+            console.log(err);
+          }
+        });
+
+
+    }
+
     const ws = new WebSocket(`ws://localhost:3001?token=${authToken}`);
     ws.binaryType = 'arraybuffer'
 
@@ -26,7 +73,7 @@
     });
 
     document.getElementById('place-pixel-button').addEventListener('click', () => {
-      place(1, 1, 2)
+      place(1, 1, 1)
         .then((pixel) => {
           console.log(pixel);
         }).catch((err) => {
@@ -34,12 +81,29 @@
         });
     })
 
+
+
     document.getElementById('get-board-button').addEventListener('click', () => {
       getBoard()
         .then((board) => {
+          draw(board.data)
           console.log(board);
         })
     })
+
+    document.getElementById('get-game-info').addEventListener('click', () => {
+      var item = localStorage.getItem('game-info');
+      console.log(JSON.parse(item));
+    })
+
+
+
+    function draw(imgData) {
+      var b64imgData = btoa(imgData); //Binary to ASCII, where it probably stands for
+      var img = new Image();
+      img.src = "data:image/jpeg;base64," + b64imgData;
+      document.body.appendChild(img); //or append it to something else, just an example
+    }
   </script>
 </body>
 
