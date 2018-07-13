@@ -16,33 +16,50 @@
   <canvas id="canvas" style="border:1px solid #000000"></canvas>
 
   <script>
+    const scale = 4;
+    let gameInfo = JSON.parse(localStorage.getItem('game-info'));
+    let ctx, canvas;
+
     window.onload = function () {
-      var canvas = document.getElementById('canvas');
-      var context = canvas.getContext('2d');
+      canvas = document.getElementById('canvas');
       canvas.addEventListener('mousedown', onDown, false);
-      var item = localStorage.getItem('game-info');
+      canvas.width = gameInfo.board.xWidth * scale;
+      canvas.height = gameInfo.board.yWidth * scale;
 
+      ctx = canvas.getContext('2d');
+    }
 
+    function drawPixel(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * scale, y * scale, scale, scale);
+    }
 
-      var canvasBoard = (JSON.parse(item));
+    function drawBoard(pixels) {
+      console.log('Drawing', pixels);
+      console.log('Game info', gameInfo);
 
-      console.log(canvasBoard);
+      let i = 0;
+      for (const pixel of pixels) {
+        x = (i % 200);
+        y = ((i - (i % 200)) / 200);
 
+        drawPixel(x, y, gameInfo.colors[pixel].hex);
+        i++;
+      }
+    }
 
-
-
-
-      var canvas = document.getElementsByTagName('canvas')[0];
-      canvas.width = canvasBoard.board.xWidth;
-      canvas.height = canvasBoard.board.yWidth;
-
+    function getCanvasClickLocation(event) {
+      var rect = canvas.getBoundingClientRect();
+      var x = event.clientX - rect.left;
+      var y = event.clientY - rect.top;
+      return { x: x / scale, y: y / scale };
     }
 
     function onDown(event) {
-      x = event.pageX;
-      y = event.pageY;
-      console.log(x);
-      console.log(y);
+      const { x, y } = getCanvasClickLocation(event);
+      console.log(x, y);
+
+      drawPixel(x, y, gameInfo.colors[7].hex);
 
       place(x, y, 6)
         .then((pixel) => {
@@ -56,11 +73,9 @@
             console.log(err);
           }
         });
-
-
     }
 
-    const ws = new WebSocket(`ws://localhost:3001?token=${authToken}`);
+    const ws = new WebSocket(`ws://localhost:3001`);
     ws.binaryType = 'arraybuffer'
 
     ws.addEventListener('open', () => {
@@ -81,29 +96,17 @@
         });
     })
 
-
-
     document.getElementById('get-board-button').addEventListener('click', () => {
       getBoard()
         .then((board) => {
-          draw(board.data)
-          console.log(board);
-        })
-    })
+          drawBoard(board);
+        });
+    });
 
     document.getElementById('get-game-info').addEventListener('click', () => {
       var item = localStorage.getItem('game-info');
       console.log(JSON.parse(item));
     })
-
-
-
-    function draw(imgData) {
-      var b64imgData = btoa(imgData); //Binary to ASCII, where it probably stands for
-      var img = new Image();
-      img.src = "data:image/jpeg;base64," + b64imgData;
-      document.body.appendChild(img); //or append it to something else, just an example
-    }
   </script>
 </body>
 
