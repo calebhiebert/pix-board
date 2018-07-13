@@ -55,33 +55,45 @@ module.exports = (auth0Options, redis) => {
     };
   };
 
-  return async (req, res, next) => {
-    const authorization = req.headers.authorization;
-
-    if (authorization && authorization.trim() !== '') {
-      const bearerToken = authorization.substring('Bearer '.length).trim();
-
-      let decoded;
-
+  return {
+    getUser: async (id) => {
       try {
-        decoded = await verifyToken(bearerToken);
+        let userData = await getUserData(id, Date.now() / 1000 + 3600);
+
+        return userData;
       } catch (err) {
-        logger.debug('JWT Error', err);
-        res.header('WWW-Authenticate', 'Bearer');
-        return res.status(401).json({ error: err });
+        throw err;
       }
+    },
 
-      try {
-        let userData = await getUserData(decoded.sub, decoded.exp);
+    mw: async (req, res, next) => {
+      const authorization = req.headers.authorization;
 
-        req.user = userData;
+      if (authorization && authorization.trim() !== '') {
+        const bearerToken = authorization.substring('Bearer '.length).trim();
+
+        let decoded;
+
+        try {
+          decoded = await verifyToken(bearerToken);
+        } catch (err) {
+          logger.debug('JWT Error', err);
+          res.header('WWW-Authenticate', 'Bearer');
+          return res.status(401).json({ error: err });
+        }
+
+        try {
+          let userData = await getUserData(decoded.sub, decoded.exp);
+
+          req.user = userData;
+          next();
+        } catch (err) {
+          logger.error('Cache Error', err);
+          return res.status(500).json({ error: err });
+        }
+      } else {
         next();
-      } catch (err) {
-        logger.error('Cache Error', err);
-        return res.status(500).json({ error: err });
       }
-    } else {
-      next();
-    }
+    },
   };
 };

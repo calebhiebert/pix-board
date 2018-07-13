@@ -14,13 +14,14 @@
     <span id="can-place"></span>
   </h3>
   <div id="color-buttons">
-
   </div>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
   <script src="config.js"></script>
   <script src="api.js"></script>
+  <script src="pixel-info.js"></script>
   <canvas id="canvas" style="border:1px solid #000000"></canvas>
+  <div id="history-info"></div>
 
   <script>
     const scale = 4;
@@ -50,7 +51,6 @@
       document.addEventListener('contextmenu', (e) => {
         const { x, y } = getCanvasClickLocation(e);
 
-        console.log('Context', x, y);
         getPix(x, y).then(history => {
           return Promise.all(history.map((h) => {
             return getUser(h.user_id).then(user => {
@@ -58,7 +58,7 @@
             });
           }));
         }).then((uh) => {
-          console.log(uh);
+          makePixelInfoDisplay(document.getElementById('history-info'), uh);
         })
 
         e.preventDefault();
@@ -124,8 +124,6 @@
 
       if (event.button === 0 && canPlace) {
         onDrawClick(x, y);
-      } else if (event.button === 2) {
-        console.log('Tile Info');
       }
     }
 

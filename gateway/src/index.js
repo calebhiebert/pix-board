@@ -12,6 +12,14 @@ const port = process.env.PORT || 3000;
 const logger = pino({ name: 'index' });
 const errLogger = pino({ name: 'unhandled-err' });
 const redis = new Redis(process.env.REDIS);
+const authHelper = auth(
+  {
+    domain: process.env.AUTH0_DOMAIN,
+    clientId: process.env.AUTH0_CLIENT_ID,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  },
+  new Redis(process.env.REDIS),
+);
 
 app.use(
   cors({
@@ -21,16 +29,7 @@ app.use(
   }),
 );
 app.use(bodyParser.json());
-app.use(
-  auth(
-    {
-      domain: process.env.AUTH0_DOMAIN,
-      clientId: process.env.AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET,
-    },
-    new Redis(process.env.REDIS),
-  ),
-);
+app.use(authHelper.mw);
 
 app.use((req, res, next) => {
   if (req.user) {
@@ -122,12 +121,17 @@ app.get('/pixel/:x/:y', async (req, res) => {
 });
 
 app.get('/user/:id', async (req, res) => {
-  const user = await redis.get(`user-cache-${req.params.id}`);
+  let user = await redis.get(`user-cache-${req.params.id}`);
 
   if (user !== null) {
     res.status(200).json(JSON.parse(user));
   } else {
-    res.status(200).json({ what: '?' });
+    try {
+      user = await authHelper.getUser(req.params.id);
+      res.status(200).json(user);
+    } catch (err) {
+      res.status(500).json({ error: err });
+    }
   }
 });
 
