@@ -1,0 +1,34 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Canvas Board</Canvas>
+  </title>
+</head>
+<!-- <script src="pixi.min.js"></script> -->
+<!-- <script src="fucntions.js"></script> -->
+
+<body>
+  <!-- <script src="board.js"></script> -->
+  <canvas id="canvas" height="200" width="200" backgo></canvas>
+  <script>
+    window.onload = function () {
+      var canvas = document.getElementById('canvas');
+      var context = canvas.getContext('2d');
+      context.fillStyle = "blue";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+      canvas.addEventListener('mousedown', onDown, false);
+    }
+
+    function onDown(event) {
+      x = event.pageX;
+      y = event.pageY;
+      console.log(x);
+      console.log(y);
+    }
+  </script>
+</body>
+
+</html>
