@@ -58,7 +58,7 @@ app.post('/place', async (req, res) => {
   }
 
   try {
-    const result = await nc.requestOneAsync('placement', msgpack.pack({ ...req.body, userId: 'dummy' }), {}, 1000);
+    const result = await nc.requestOneAsync('placement', msgpack.pack({ ...req.body, userId: req.user.id }), {}, 1000);
     const pix = msgpack.unpack(result);
     res.status(200).json(pix);
   } catch (err) {
@@ -68,9 +68,16 @@ app.post('/place', async (req, res) => {
 });
 
 app.get('/board', async (req, res) => {
-  const board = new Uint8Array(500 * 500);
-  res.status(200).write(Buffer.from(board), 'buffer');
-  res.end('', 'buffer');
+  try {
+    nc.publish('board-from-db');
+    const result = await nc.requestOneAsync('board-cache', null, {}, 2500);
+
+    res.header('Content-Length', result.length);
+    res.status(200).write(result, 'buffer');
+    res.end(null, 'buffer');
+  } catch (err) {
+    logger.error('Board cache error', err);
+  }
 });
 
 app.get('/info', async (req, res) => {

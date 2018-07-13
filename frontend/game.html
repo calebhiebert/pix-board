@@ -7,18 +7,25 @@
 <body>
   <h2>This is the game yall</h2>
   <button id="place-pixel-button">Place Pixel</button>
+  <button id="get-board-button">Get Board</button>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script>
     document.getElementById('place-pixel-button').addEventListener('click', () => {
-      console.log('clicked');
-      place(1, 1, 1)
+      place(1, 1, 2)
         .then((pixel) => {
           console.log(pixel);
         }).catch((err) => {
           console.error(err);
         });
+    })
+
+    document.getElementById('get-board-button').addEventListener('click', () => {
+      getBoard()
+        .then((board) => {
+          // console.log(board);
+        })
     })
   </script>
 </body>

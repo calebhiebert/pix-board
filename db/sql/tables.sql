@@ -1,4 +1,4 @@
-DROP TABLE pix;
+-- DROP TABLE pix;
 
 CREATE TABLE IF NOT EXISTS pix (
   id      SERIAL        PRIMARY KEY,

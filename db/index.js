@@ -12,6 +12,7 @@ function sql(file) {
 const q = {
   getPixHistory: sql('get_pix_history.sql'),
   getPix: sql('get_pix.sql'),
+  getBoard: sql('get_pix_board.sql'),
   insertPix: sql('insert_pix.sql'),
   tables: sql('tables.sql'),
 };
@@ -45,8 +46,13 @@ const getPix = (id) => {
   return db.one(q.getPix, { id });
 };
 
+const getBoard = () => {
+  return db.any(q.getBoard);
+};
+
 module.exports = {
   insertPix,
   getPixHistory,
   getPix,
+  getBoard,
 };

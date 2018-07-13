@@ -53,3 +53,7 @@ services:
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
+  adminer:
+    image: adminer
+    ports:
+      - "9000:8080"
