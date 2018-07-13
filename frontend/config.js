@@ -1,1 +1,1 @@
-const apiUrl = 'http://localhost:3000';
+const apiUrl = `http://${location.hostname}:3000`;

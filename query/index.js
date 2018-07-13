@@ -22,6 +22,12 @@ nc.subscribe('board-cache', async (data, replyTo) => {
   nc.publish(replyTo, Buffer.from(board));
 });
 
+setInterval(async () => {
+  logger.info('Reconstructing Cache');
+  const pixels = await db.getBoard();
+  boardCache = Buffer.from(constructBoard(pixels));
+}, 1000 * 30);
+
 function constructBoard(pixels) {
   const board = new Uint8Array(200 * 200);
 

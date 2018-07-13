@@ -90,6 +90,7 @@ app.get('/info', async (req, res) => {
       placeRate: 60,
     },
     colors: [
+      { hex: '#FFFFFF', name: 'white' },
       { hex: '#B21F35', name: 'deep-red' },
       { hex: '#D82735', name: 'red' },
       { hex: '#FF7435', name: 'orange' },

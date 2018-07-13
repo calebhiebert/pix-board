@@ -6,9 +6,16 @@
 
 <body>
   <h2>This is the game yall</h2>
-  <button id="place-pixel-button">Place Pixel</button>
-  <button id="get-board-button">Get Board</button>
-  <button id="get-game-info">Get Game Info</button>
+  <h3>Current Color:
+    <span id="color-display"></span>
+  </h3>
+  <h3>
+    Can Place:
+    <span id="can-place"></span>
+  </h3>
+  <div id="color-buttons">
+
+  </div>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
   <script src="config.js"></script>
@@ -17,7 +24,13 @@
 
   <script>
     const scale = 4;
+    let canPlace = true;
+    let color = 0;
+    let board;
     let gameInfo = JSON.parse(localStorage.getItem('game-info'));
+    setCurrentColor(0);
+    setCanPlace(true);
+    makeButtons(gameInfo.colors);
     let ctx, canvas;
 
     window.onload = function () {
@@ -27,23 +40,46 @@
       canvas.height = gameInfo.board.yWidth * scale;
 
       ctx = canvas.getContext('2d');
+
+      getBoard()
+        .then((b) => {
+          board = b;
+          drawBoard(b);
+        });
+    }
+
+    function makeButtons(colors) {
+      const root = document.getElementById('color-buttons')
+
+      colors.forEach((color, i) => {
+        const btn = document.createElement('button');
+        btn.innerText = color.name;
+        btn.addEventListener('click', () => {
+          setCurrentColor(i);
+        });
+        root.appendChild(btn);
+      })
     }
 
     function drawPixel(x, y, color) {
-      ctx.fillStyle = color;
+      const oldColor = board[y * gameInfo.board.xWidth + x];
+      board[y * gameInfo.board.xWidth + x] = color;
+
+      ctx.fillStyle = gameInfo.colors[color].hex;
       ctx.fillRect(x * scale, y * scale, scale, scale);
+
+      return () => {
+        drawPixel(x, y, oldColor);
+      }
     }
 
     function drawBoard(pixels) {
-      console.log('Drawing', pixels);
-      console.log('Game info', gameInfo);
-
       let i = 0;
       for (const pixel of pixels) {
         x = (i % 200);
         y = ((i - (i % 200)) / 200);
 
-        drawPixel(x, y, gameInfo.colors[pixel].hex);
+        drawPixel(x, y, pixel);
         i++;
       }
     }
@@ -52,19 +88,37 @@
       var rect = canvas.getBoundingClientRect();
       var x = event.clientX - rect.left;
       var y = event.clientY - rect.top;
-      return { x: x / scale, y: y / scale };
+      return { x: Math.floor(x / scale), y: Math.floor(y / scale) };
+    }
+
+    function setCurrentColor(c) {
+      color = c;
+      document.getElementById('color-display').innerText = gameInfo.colors[c].name;
+    }
+
+    function setCanPlace(cp) {
+      canPlace = cp;
+      document.getElementById('can-place').innerText = cp ? 'Yes' : 'No';
     }
 
     function onDown(event) {
+      if (!canPlace) {
+        return;
+      }
+
       const { x, y } = getCanvasClickLocation(event);
-      console.log(x, y);
 
-      drawPixel(x, y, gameInfo.colors[7].hex);
+      setCanPlace(false);
+      setTimeout(() => {
+        setCanPlace(true);
+      }, 1000);
 
-      place(x, y, 6)
+      const undo = drawPixel(x, y, color);
+
+      place(x, y, color)
         .then((pixel) => {
-          console.log(pixel);
         }).catch((err) => {
+          undo();
           if (err.response.status === 400) {
             console.log("Too Fast!!!");
           }
@@ -75,7 +129,7 @@
         });
     }
 
-    const ws = new WebSocket(`ws://localhost:3001`);
+    const ws = new WebSocket(`ws://${location.hostname}:3001`);
     ws.binaryType = 'arraybuffer'
 
     ws.addEventListener('open', () => {
@@ -84,29 +138,15 @@
 
     ws.addEventListener('message', ({ data }) => {
       const unpacked = msgpack.decode(new Uint8Array(data));
+      const d = unpacked.data;
       console.log('Websocket Message', unpacked);
+
+      switch (unpacked.type) {
+        case 'new-pixel':
+          drawPixel(d.x, d.y, d.pix);
+          break;
+      }
     });
-
-    document.getElementById('place-pixel-button').addEventListener('click', () => {
-      place(1, 1, 1)
-        .then((pixel) => {
-          console.log(pixel);
-        }).catch((err) => {
-          console.error(err);
-        });
-    })
-
-    document.getElementById('get-board-button').addEventListener('click', () => {
-      getBoard()
-        .then((board) => {
-          drawBoard(board);
-        });
-    });
-
-    document.getElementById('get-game-info').addEventListener('click', () => {
-      var item = localStorage.getItem('game-info');
-      console.log(JSON.parse(item));
-    })
   </script>
 </body>
 
