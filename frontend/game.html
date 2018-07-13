@@ -44,7 +44,7 @@
       </div>
 
       <script>
-        let scale = 4;
+        let scale = 20;
         let canPlace = true;
         let color = 0;
         let board;
@@ -57,14 +57,13 @@
         var originx = 0;
         var originy = 0;
 
-
-
         window.onload = function () {
           canvas = document.getElementById('canvas');
           canvas.addEventListener('mousedown', onDown, false);
-          canvas.width = gameInfo.board.xWidth * scale;
-          canvas.height = gameInfo.board.yWidth * scale;
+          canvas.width = gameInfo.board.xWidth;
+          canvas.height = gameInfo.board.yWidth;
           ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
 
           getBoard()
             .then((b) => {
@@ -90,14 +89,15 @@
 
           canvas.onmousewheel = function (event) {
             console.log("trigged");
+            event.preventDefault();
             if (event.deltaY < 0) {
-              document.getElementById("canvasBorder").style.transform = "scale(2,2)";
+              setScale(20);
             } else {
-              document.getElementById("canvasBorder").style.transform = "scale(1,1)";
+              setScale(4);
             }
           }
 
-          document.getElementById("canvasBorder").style.transform = "scale(1,1)";
+          setScale(4);
         }
 
         function makeButtons(colors) {
@@ -111,7 +111,11 @@
             });
             root.appendChild(btn);
           })
+        }
 
+        function setScale(s) {
+          scale = s;
+          document.getElementById("canvasBorder").style.transform = `scale(${s},${s})`;
         }
 
         function onDown(event) {
@@ -140,7 +144,7 @@
           board[y * gameInfo.board.xWidth + x] = color;
 
           ctx.fillStyle = gameInfo.colors[color].hex;
-          ctx.fillRect(x * scale, y * scale, scale, scale);
+          ctx.fillRect(x, y, 1, 1);
 
           return () => {
             drawPixel(x, y, oldColor);
@@ -160,6 +164,7 @@
 
         function getCanvasClickLocation(event) {
           var rect = canvas.getBoundingClientRect();
+          console.log(rect);
           var x = event.clientX - rect.left;
           var y = event.clientY - rect.top;
           return { x: Math.floor(x / scale), y: Math.floor(y / scale) };
@@ -232,6 +237,10 @@
 
         .is-horizontal-center {
           justify-content: center;
+        }
+
+        #canvasBorder {
+          image-rendering: pixelated;
         }
       </style>
 
