@@ -69,7 +69,6 @@ app.post('/place', async (req, res) => {
 
 app.get('/board', async (req, res) => {
   try {
-    nc.publish('board-from-db');
     const result = await nc.requestOneAsync('board-cache', null, {}, 2500);
 
     res.header('Content-Length', result.length);
