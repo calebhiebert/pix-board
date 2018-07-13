@@ -25,6 +25,15 @@ nc.subscribe('board-cache', async (data, replyTo) => {
   }
 });
 
+nc.subscribe('pixel-history', async (data, replyTo) => {
+  const query = msgpack.unpack(data);
+
+  const pixelHistory = await db.getPixHistory(query.x, query.y, 5);
+  logger.info('Pixel History', pixelHistory, query);
+
+  nc.publish(replyTo, msgpack.pack(pixelHistory));
+});
+
 function constructBoard(pixels) {
   const board = new Uint8Array(200 * 200);
 

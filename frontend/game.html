@@ -46,6 +46,23 @@
           board = b;
           drawBoard(b);
         });
+
+      document.addEventListener('contextmenu', (e) => {
+        const { x, y } = getCanvasClickLocation(e);
+
+        console.log('Context', x, y);
+        getPix(x, y).then(history => {
+          return Promise.all(history.map((h) => {
+            return getUser(h.user_id).then(user => {
+              return { ...h, user }
+            });
+          }));
+        }).then((uh) => {
+          console.log(uh);
+        })
+
+        e.preventDefault();
+      }, false);
     }
 
     function makeButtons(colors) {
@@ -63,11 +80,6 @@
 
     function drawPixel(x, y, color) {
       const oldColor = board[y * gameInfo.board.xWidth + x];
-
-      if (color > gameInfo.colors.length) {
-        console.log('Invalid color', color, 'at', x, y);
-        return
-      }
 
       board[y * gameInfo.board.xWidth + x] = color;
 
@@ -108,12 +120,16 @@
     }
 
     function onDown(event) {
-      if (!canPlace) {
-        return;
-      }
-
       const { x, y } = getCanvasClickLocation(event);
 
+      if (event.button === 0 && canPlace) {
+        onDrawClick(x, y);
+      } else if (event.button === 2) {
+        console.log('Tile Info');
+      }
+    }
+
+    function onDrawClick(x, y) {
       setCanPlace(false);
       setTimeout(() => {
         setCanPlace(true);

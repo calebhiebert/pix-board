@@ -14,6 +14,27 @@ function getInfo() {
     .then(handleAxiosResponse);
 }
 
+function getPix(x, y) {
+  return axios
+    .get(`${apiUrl}/pixel/${x}/${y}`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+    .then(handleAxiosResponse);
+}
+
+function getUser(id) {
+  return axios
+    .get(`${apiUrl}/user/${id}`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      timeout: 5000,
+    })
+    .then(handleAxiosResponse);
+}
+
 function getBoard() {
   return axios
     .get(`${apiUrl}/board`, {

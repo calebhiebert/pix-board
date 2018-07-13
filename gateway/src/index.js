@@ -111,6 +111,26 @@ app.get('/info', async (req, res) => {
   });
 });
 
+app.get('/pixel/:x/:y', async (req, res) => {
+  const history = await nc.requestOneAsync(
+    'pixel-history',
+    msgpack.pack({ x: parseInt(req.params.x), y: parseInt(req.params.y) }),
+    {},
+    2500,
+  );
+  res.status(200).json(msgpack.unpack(history));
+});
+
+app.get('/user/:id', async (req, res) => {
+  const user = await redis.get(`user-cache-${req.params.id}`);
+
+  if (user !== null) {
+    res.status(200).json(JSON.parse(user));
+  } else {
+    res.status(200).json({ what: '?' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.sendStatus(200);
 });
