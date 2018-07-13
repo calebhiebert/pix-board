@@ -13,6 +13,7 @@
     "@px/db": "../db",
     "@px/nats": "../nats",
     "dotenv": "^6.0.0",
+    "ioredis": "^3.2.2",
     "msgpack": "^1.0.2",
     "pino": "^4.17.3"
   }

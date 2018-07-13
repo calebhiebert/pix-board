@@ -63,6 +63,12 @@
 
     function drawPixel(x, y, color) {
       const oldColor = board[y * gameInfo.board.xWidth + x];
+
+      if (color > gameInfo.colors.length) {
+        console.log('Invalid color', color, 'at', x, y);
+        return
+      }
+
       board[y * gameInfo.board.xWidth + x] = color;
 
       ctx.fillStyle = gameInfo.colors[color].hex;

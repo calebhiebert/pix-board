@@ -2,31 +2,28 @@ const nc = require('@px/nats');
 const msgpack = require('msgpack');
 const pino = require('pino');
 const db = require('@px/db');
+const Redis = require('ioredis');
 
 const logger = pino({ name: 'query' });
+const redis = new Redis(process.env.REDIS);
 
-let boardCache = null;
-
-nc.subscribe('board-cache', async (data, replyTo) => {
-  let board;
-
-  if (boardCache === null) {
-    const pixels = await db.getBoard();
-
-    board = Buffer.from(constructBoard(pixels));
-    boardCache = board;
-  } else {
-    board = boardCache;
-  }
-
-  nc.publish(replyTo, Buffer.from(board));
+nc.subscribe('new-pixel', async (data) => {
+  const pixel = msgpack.unpack(data);
+  await redis.bitfield('board', 'SET', 'u8', (pixel.y * 200 + pixel.x) * 8, pixel.pix);
 });
 
-setInterval(async () => {
-  logger.info('Reconstructing Cache');
-  const pixels = await db.getBoard();
-  boardCache = Buffer.from(constructBoard(pixels));
-}, 1000 * 30);
+nc.subscribe('board-cache', async (data, replyTo) => {
+  const bitField = await redis.getBuffer('board');
+  if (bitField === null) {
+    logger.info('Reconstructing board');
+    const pixels = await db.getBoard();
+    let board = Buffer.from(constructBoard(pixels));
+    await redis.setBuffer('board', board);
+    nc.publish(replyTo, board);
+  } else {
+    nc.publish(replyTo, bitField);
+  }
+});
 
 function constructBoard(pixels) {
   const board = new Uint8Array(200 * 200);
@@ -37,6 +34,19 @@ function constructBoard(pixels) {
 
   return board;
 }
+
+async function startBoard() {
+  const bitfield = await redis.getBuffer('board');
+
+  if (bitfield === null || bitfield.length < 200 * 200) {
+    logger.info('Reconstructing board');
+    const pixels = await db.getBoard();
+    let board = Buffer.from(constructBoard(pixels));
+    await redis.setBuffer('board', board);
+  }
+}
+
+startBoard();
 
 function mapCoords(x, y, w, h) {
   return y * w + x;

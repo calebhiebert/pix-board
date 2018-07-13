@@ -38,6 +38,7 @@ services:
     command: bash -c "cd query && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start"
     environment:
       NATS: "nats://nats:4222"
+      REDIS: "redis://redis"
       PGUSER: postgres
       PGHOST: postgres
       PGPASSWORD: password
