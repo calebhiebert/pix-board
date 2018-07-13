@@ -1,33 +1,111 @@
 <html>
 
 <head>
-  <title>Game</title>
-</head>
+  <title>Pixel Game</title>
+  <!-- Bulma -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css.map">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+    crossorigin="anonymous">
 
-<body>
-  <h2>This is the game yall</h2>
-  <button id="place-pixel-button">Place Pixel</button>
-  <button id="get-board-button">Get Board</button>
-  <button id="get-game-info">Get Game Info</button>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
   <script src="config.js"></script>
   <script src="api.js"></script>
-  <canvas id="canvas" style="border:1px solid #000000"></canvas>
+
+</head>
+
+<body>
+
+  <div class="columns is-horizontal-center box">
+    <div class="column is-narrow">
+      <div class="title has-text-centered">
+        <i class="fas fa-gamepad"></i>
+        Pixel Game
+        <i class="fas fa-gamepad"></i>
+      </div>
+      <div id="canvasBorder">
+        <canvas id="canvas" style=" border:1px solid #000000"></canvas>
+      </div>
+    </div>
+  </div>
+
 
   <script>
-    const scale = 4;
+    let scale = 4;
     let gameInfo = JSON.parse(localStorage.getItem('game-info'));
     let ctx, canvas;
+    let boardCache;
+    var originx = 0;
+    var originy = 0;
+
+
 
     window.onload = function () {
       canvas = document.getElementById('canvas');
       canvas.addEventListener('mousedown', onDown, false);
       canvas.width = gameInfo.board.xWidth * scale;
       canvas.height = gameInfo.board.yWidth * scale;
-
       ctx = canvas.getContext('2d');
+      document.getElementById("canvasBorder").style.transform = "scale(1,1)";
+      getBoard()
+        .then((board) => {
+          boardCache = board;
+          drawBoard(board);
+        });
+
+
+
+
+
+      canvas.onmousewheel = function (event) {
+        console.log("trigged");
+        if (event.deltaY < 0) {
+          document.getElementById("canvasBorder").style.transform = "scale(2,2)";
+        } else {
+          document.getElementById("canvasBorder").style.transform = "scale(1,1)";
+        }
+      }
     }
+
+
+
+
+
+
+    function onDown(event) {
+      const { x, y } = getCanvasClickLocation(event);
+      console.log(x, y);
+
+      drawPixel(x, y, gameInfo.colors[7].hex);
+
+      place(x, y, 6)
+        .then((pixel) => {
+          console.log(pixel);
+        }).catch((err) => {
+          if (err.response.status === 400) {
+            console.log("Too Fast!!!");
+          }
+          if (err.response.status === 560) {
+            console.log("Server is down:");
+            console.log(err);
+          }
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     function drawPixel(x, y, color) {
       ctx.fillStyle = color;
@@ -55,25 +133,6 @@
       return { x: x / scale, y: y / scale };
     }
 
-    function onDown(event) {
-      const { x, y } = getCanvasClickLocation(event);
-      console.log(x, y);
-
-      drawPixel(x, y, gameInfo.colors[7].hex);
-
-      place(x, y, 6)
-        .then((pixel) => {
-          console.log(pixel);
-        }).catch((err) => {
-          if (err.response.status === 400) {
-            console.log("Too Fast!!!");
-          }
-          if (err.response.status === 560) {
-            console.log("Server is down:");
-            console.log(err);
-          }
-        });
-    }
 
     const ws = new WebSocket(`ws://localhost:3001`);
     ws.binaryType = 'arraybuffer'
@@ -99,6 +158,7 @@
     document.getElementById('get-board-button').addEventListener('click', () => {
       getBoard()
         .then((board) => {
+          boardCache = board;
           drawBoard(board);
         });
     });
@@ -108,6 +168,18 @@
       console.log(JSON.parse(item));
     })
   </script>
+
+
+  <style>
+    .mt {
+      margin-top: 0.5rem !important;
+    }
+
+    .is-horizontal-center {
+      justify-content: center;
+    }
+  </style>
+
 </body>
 
 </html>
