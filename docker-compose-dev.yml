@@ -5,6 +5,7 @@ services:
     command: bash -c "cd gateway && yarn --silent && yarn upgrade --silent @px/db @px/nats && nodemon -q --exec yarn start --silent"
     environment:
       NATS: "nats://nats:4222"
+      REDIS: "redis://redis:6379"
     ports:
       - "3000:3000"
     volumes:
@@ -29,6 +30,12 @@ services:
       PGPASSWORD: password
     volumes:
       - "$PWD:/app/"
+  frontend:
+    image: nginx:1.15-alpine
+    volumes:
+      - "$PWD/frontend:/usr/share/nginx/html:ro"
+    ports:
+      - "8080:80"
   nats:
     image: nats:1.2.0-linux
     ports:

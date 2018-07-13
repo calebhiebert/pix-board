@@ -4,33 +4,42 @@ const bodyParser = require('body-parser');
 const msgpack = require('msgpack');
 const v = require('./validate');
 const nc = require('@px/nats');
-// const auth = require('./auth0-middleware');
-// const Redis = require('ioredis');
+const cors = require('cors');
+const auth = require('./auth0-middleware');
+const Redis = require('ioredis');
 
 const port = process.env.PORT || 3000;
 const logger = pino({ name: 'index' });
 const errLogger = pino({ name: 'unhandled-err' });
+const redis = new Redis(process.env.REDIS);
 
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
+  }),
+);
 app.use(bodyParser.json());
-// app.use(
-//   auth(
-//     {
-//       domain: process.env.AUTH0_DOMAIN,
-//       clientId: process.env.AUTH0_CLIENT_ID,
-//       clientSecret: process.env.AUTH0_CLIENT_SECRET,
-//     },
-//     new Redis(),
-//   ),
-// );
+app.use(
+  auth(
+    {
+      domain: process.env.AUTH0_DOMAIN,
+      clientId: process.env.AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    },
+    new Redis(process.env.REDIS),
+  ),
+);
 
-// app.use((req, res, next) => {
-//   if (req.user) {
-//     next();
-//   } else {
-//     res.header('WWW-Authenticate', 'Bearer');
-//     return res.status(401).json({ error: 'Authentication required' });
-//   }
-// });
+app.use((req, res, next) => {
+  if (req.user) {
+    next();
+  } else {
+    res.header('WWW-Authenticate', 'Bearer');
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+});
 
 app.post('/place', async (req, res) => {
   try {
@@ -40,7 +49,13 @@ app.post('/place', async (req, res) => {
     return res.status(400).json({ error: 'invalid request', info: err.errors });
   }
 
-  // Validate user can place pix here (check time since last placement and whatnot)
+  const placeLock = await redis.get(`place-lock-${req.user.id}`);
+  if (placeLock === null) {
+    // We're good. Place lock only exists if the user cannot place a pixel
+    await redis.set(`place-lock-${req.user.id}`, true, 'PX', 1000);
+  } else {
+    return res.status(400).json({ error: 'Rate limit is 60 pixels per minute' });
+  }
 
   try {
     const result = await nc.requestOneAsync('placement', msgpack.pack({ ...req.body, userId: 'dummy' }), {}, 1000);

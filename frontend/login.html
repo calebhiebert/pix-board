@@ -1,0 +1,54 @@
+<html>
+
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" type="text/css" </head>
+
+  <body>
+    <h1>Login Time!!</h1>
+  </body>
+
+  <script src="https://cdn.auth0.com/js/lock/11.7.2/lock.min.js"></script>
+  <script>
+    const clientId = "yZUD0e57WDBRDlrwU0YR4cv9S2045sgI";
+    const domain = "pix-board.auth0.com";
+    const lock = new Auth0Lock(clientId, domain, {
+      closeable: false,
+      auth: {
+        audience: 'https://pixboard.panchem.io',
+        params: {
+          scope: 'openid user_metadata email picture'
+        }
+      }
+    });
+
+    lock.on("authenticated", (authResult) => {
+      localStorage.setItem('auth-token', authResult.accessToken);
+
+      lock.getUserInfo(authResult.accessToken, (error, profile) => {
+        if (error) {
+          console.error(error);
+        } else {
+          localStorage.setItem('user-data', JSON.stringify(profile));
+          location.replace('/loading.html');
+        }
+      })
+    });
+
+    if (localStorage.getItem('auth-token')) {
+      lock.getUserInfo(localStorage.getItem('auth-token'), (error, profile) => {
+        if (error) {
+          localStorage.removeItem('auth-token');
+          localStorage.removeItem('user-data');
+          location.reload();
+        } else {
+          localStorage.setItem('user-data', JSON.stringify(profile));
+          location.replace('/loading.html');
+        }
+      })
+    } else {
+      lock.show();
+    }
+  </script>
+
+</html>

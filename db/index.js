@@ -2,11 +2,13 @@ const pg = require('pg-promise');
 const path = require('path');
 const logger = require('pino')({ name: 'db', level: process.env.LOG_LEVEL || 'info' });
 
+// Creates a 'compiled' version of a sql file
 function sql(file) {
   const fullPath = path.join(__dirname, 'sql', file);
   return new pg.QueryFile(fullPath, { minify: true });
 }
 
+// Compile all available queries
 const q = {
   getPixHistory: sql('get_pix_history.sql'),
   getPix: sql('get_pix.sql'),
@@ -14,6 +16,7 @@ const q = {
   tables: sql('tables.sql'),
 };
 
+// Create db instance and connect
 const db = pg()({
   host: process.env.PGHOST,
   database: process.env.PGUSER,
@@ -21,6 +24,7 @@ const db = pg()({
   password: process.env.PGPASSWORD,
 });
 
+// Run the tables query to create tables
 db.any(q.tables)
   .then((result) => {
     logger.info('Successfully created database');
