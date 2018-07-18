@@ -1,173 +1,249 @@
 <html>
 
 <head>
-  <title>Game</title>
-</head>
+  <title>Pixel Game</title>
+  <!-- Bulma -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css.map">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+    crossorigin="anonymous">
 
-<body>
-  <h2>This is the game yall</h2>
-  <h3>Current Color:
-    <span id="color-display"></span>
-  </h3>
-  <h3>
-    Can Place:
-    <span id="can-place"></span>
-  </h3>
-  <div id="color-buttons">
-  </div>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
-  <script src="config.js"></script>
-  <script src="api.js"></script>
-  <script src="pixel-info.js"></script>
-  <canvas id="canvas" style="border:1px solid #000000"></canvas>
-  <div id="history-info"></div>
+  <body>
+    <h2>This is the game yall</h2>
+    <h3>Current Color:
+      <span id="color-display"></span>
+    </h3>
+    <h3>
+      Can Place:
+      <span id="can-place"></span>
+    </h3>
+    <div id="color-buttons">
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://rawgit.com/kawanet/msgpack-lite/master/dist/msgpack.min.js"></script>
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="pixel-info.js"></script>
 
-  <script>
-    const scale = 4;
-    let canPlace = true;
-    let color = 0;
-    let board;
-    let gameInfo = JSON.parse(localStorage.getItem('game-info'));
-    setCurrentColor(0);
-    setCanPlace(true);
-    makeButtons(gameInfo.colors);
-    let ctx, canvas;
+    <body>
 
-    window.onload = function () {
-      canvas = document.getElementById('canvas');
-      canvas.addEventListener('mousedown', onDown, false);
-      canvas.width = gameInfo.board.xWidth * scale;
-      canvas.height = gameInfo.board.yWidth * scale;
+      <div class="columns is-horizontal-center box">
+        <div class="column is-narrow">
+          <div class="title has-text-centered">
+            <i class="fas fa-gamepad"></i>
+            Pixel Game
+            <i class="fas fa-gamepad"></i>
+          </div>
+          <div id="canvasBorder">
+            <canvas id="canvas" style=" border:1px solid #000000"></canvas>
+          </div>
+        </div>
+        <div id="history-info"></div>
+      </div>
 
-      ctx = canvas.getContext('2d');
+      <script>
+        let scale = 20;
+        let canPlace = true;
+        let color = 0;
+        let board;
+        let gameInfo = JSON.parse(localStorage.getItem('game-info'));
+        setCurrentColor(0);
+        setCanPlace(true);
+        makeButtons(gameInfo.colors);
+        let ctx, canvas;
+        let boardCache;
+        var originx = 0;
+        var originy = 0;
 
-      getBoard()
-        .then((b) => {
-          board = b;
-          drawBoard(b);
-        });
+        window.onload = function () {
+          canvas = document.getElementById('canvas');
+          canvas.addEventListener('mousedown', onDown, false);
+          canvas.width = gameInfo.board.xWidth;
+          canvas.height = gameInfo.board.yWidth;
+          ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
 
-      document.addEventListener('contextmenu', (e) => {
-        const { x, y } = getCanvasClickLocation(e);
-
-        getPix(x, y).then(history => {
-          return Promise.all(history.map((h) => {
-            return getUser(h.user_id).then(user => {
-              return { ...h, user }
+          getBoard()
+            .then((b) => {
+              board = b;
+              drawBoard(b);
             });
-          }));
-        }).then((uh) => {
-          makePixelInfoDisplay(document.getElementById('history-info'), uh);
+
+          document.addEventListener('contextmenu', (e) => {
+            const { x, y } = getCanvasClickLocation(e);
+
+            getPix(x, y).then(history => {
+              return Promise.all(history.map((h) => {
+                return getUser(h.user_id).then(user => {
+                  return { ...h, user }
+                });
+              }));
+            }).then((uh) => {
+              makePixelInfoDisplay(document.getElementById('history-info'), uh);
+            })
+
+            e.preventDefault();
+          }, false);
+
+          canvas.onmousewheel = function (event) {
+            console.log("trigged");
+            event.preventDefault();
+            if (event.deltaY < 0) {
+              setScale(20);
+            } else {
+              setScale(4);
+            }
+          }
+
+          setScale(4);
+        }
+
+        function makeButtons(colors) {
+          const root = document.getElementById('color-buttons')
+
+          colors.forEach((color, i) => {
+            const btn = document.createElement('button');
+            btn.innerText = color.name;
+            btn.addEventListener('click', () => {
+              setCurrentColor(i);
+            });
+            root.appendChild(btn);
+          })
+        }
+
+        function setScale(s) {
+          scale = s;
+          document.getElementById("canvasBorder").style.transform = `scale(${s},${s})`;
+        }
+
+        function onDown(event) {
+          const { x, y } = getCanvasClickLocation(event);
+          console.log(x, y);
+
+          drawPixel(x, y, gameInfo.colors[7].hex);
+
+          place(x, y, 6)
+            .then((pixel) => {
+              console.log(pixel);
+            }).catch((err) => {
+              if (err.response.status === 400) {
+                console.log("Too Fast!!!");
+              }
+              if (err.response.status === 560) {
+                console.log("Server is down:");
+                console.log(err);
+              }
+            });
+        }
+
+        function drawPixel(x, y, color) {
+          const oldColor = board[y * gameInfo.board.xWidth + x];
+
+          board[y * gameInfo.board.xWidth + x] = color;
+
+          ctx.fillStyle = gameInfo.colors[color].hex;
+          ctx.fillRect(x, y, 1, 1);
+
+          return () => {
+            drawPixel(x, y, oldColor);
+          }
+        }
+
+        function drawBoard(pixels) {
+          let i = 0;
+          for (const pixel of pixels) {
+            x = (i % 200);
+            y = ((i - (i % 200)) / 200);
+
+            drawPixel(x, y, pixel);
+            i++;
+          }
+        }
+
+        function getCanvasClickLocation(event) {
+          var rect = canvas.getBoundingClientRect();
+          console.log(rect);
+          var x = event.clientX - rect.left;
+          var y = event.clientY - rect.top;
+          return { x: Math.floor(x / scale), y: Math.floor(y / scale) };
+        }
+
+        function setCurrentColor(c) {
+          color = c;
+          document.getElementById('color-display').innerText = gameInfo.colors[c].name;
+        }
+
+        function setCanPlace(cp) {
+          canPlace = cp;
+          document.getElementById('can-place').innerText = cp ? 'Yes' : 'No';
+        }
+
+        function onDown(event) {
+          const { x, y } = getCanvasClickLocation(event);
+
+          if (event.button === 0 && canPlace) {
+            onDrawClick(x, y);
+          }
+        }
+
+        function onDrawClick(x, y) {
+          setCanPlace(false);
+          setTimeout(() => {
+            setCanPlace(true);
+          }, 1000);
+
+          const undo = drawPixel(x, y, color);
+
+          place(x, y, color)
+            .then((pixel) => {
+            }).catch((err) => {
+              undo();
+              if (err.response.status === 400) {
+                console.log("Too Fast!!!");
+              }
+              if (err.response.status === 560) {
+                console.log("Server is down:");
+                console.log(err);
+              }
+            });
+        }
+
+        const ws = new WebSocket(`ws://${location.hostname}:3001`);
+        ws.binaryType = 'arraybuffer'
+
+        ws.addEventListener('open', () => {
+          console.log('Websocket Connection Opened');
         })
 
-        e.preventDefault();
-      }, false);
-    }
-
-    function makeButtons(colors) {
-      const root = document.getElementById('color-buttons')
-
-      colors.forEach((color, i) => {
-        const btn = document.createElement('button');
-        btn.innerText = color.name;
-        btn.addEventListener('click', () => {
-          setCurrentColor(i);
-        });
-        root.appendChild(btn);
-      })
-    }
-
-    function drawPixel(x, y, color) {
-      const oldColor = board[y * gameInfo.board.xWidth + x];
-
-      board[y * gameInfo.board.xWidth + x] = color;
-
-      ctx.fillStyle = gameInfo.colors[color].hex;
-      ctx.fillRect(x * scale, y * scale, scale, scale);
-
-      return () => {
-        drawPixel(x, y, oldColor);
-      }
-    }
-
-    function drawBoard(pixels) {
-      let i = 0;
-      for (const pixel of pixels) {
-        x = (i % 200);
-        y = ((i - (i % 200)) / 200);
-
-        drawPixel(x, y, pixel);
-        i++;
-      }
-    }
-
-    function getCanvasClickLocation(event) {
-      var rect = canvas.getBoundingClientRect();
-      var x = event.clientX - rect.left;
-      var y = event.clientY - rect.top;
-      return { x: Math.floor(x / scale), y: Math.floor(y / scale) };
-    }
-
-    function setCurrentColor(c) {
-      color = c;
-      document.getElementById('color-display').innerText = gameInfo.colors[c].name;
-    }
-
-    function setCanPlace(cp) {
-      canPlace = cp;
-      document.getElementById('can-place').innerText = cp ? 'Yes' : 'No';
-    }
-
-    function onDown(event) {
-      const { x, y } = getCanvasClickLocation(event);
-
-      if (event.button === 0 && canPlace) {
-        onDrawClick(x, y);
-      }
-    }
-
-    function onDrawClick(x, y) {
-      setCanPlace(false);
-      setTimeout(() => {
-        setCanPlace(true);
-      }, 1000);
-
-      const undo = drawPixel(x, y, color);
-
-      place(x, y, color)
-        .then((pixel) => {
-        }).catch((err) => {
-          undo();
-          if (err.response.status === 400) {
-            console.log("Too Fast!!!");
-          }
-          if (err.response.status === 560) {
-            console.log("Server is down:");
-            console.log(err);
+        ws.addEventListener('message', ({ data }) => {
+          const unpacked = msgpack.decode(new Uint8Array(data));
+          const d = unpacked.data;
+          console.log('Websocket Message', unpacked);
+          switch (unpacked.type) {
+            case 'new-pixel':
+              drawPixel(d.x, d.y, d.pix);
+              break;
           }
         });
-    }
+      </script>
 
-    const ws = new WebSocket(`ws://${location.hostname}:3001`);
-    ws.binaryType = 'arraybuffer'
 
-    ws.addEventListener('open', () => {
-      console.log('Websocket Connection Opened');
-    })
+      <style>
+        .mt {
+          margin-top: 0.5rem !important;
+        }
 
-    ws.addEventListener('message', ({ data }) => {
-      const unpacked = msgpack.decode(new Uint8Array(data));
-      const d = unpacked.data;
-      console.log('Websocket Message', unpacked);
+        .is-horizontal-center {
+          justify-content: center;
+        }
 
-      switch (unpacked.type) {
-        case 'new-pixel':
-          drawPixel(d.x, d.y, d.pix);
-          break;
-      }
-    });
-  </script>
-</body>
+        #canvasBorder {
+          image-rendering: pixelated;
+        }
+      </style>
+
+    </body>
 
 </html>
